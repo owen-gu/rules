@@ -2,3 +2,4 @@ payload:
   # > cnprint.org
   # - USER-AGENT,cnprint*
   - DOMAIN-KEYWORD,cnprint
+  - DOMAIN-SUFFIX,cnprint.org
