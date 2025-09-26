@@ -1,5 +1,5 @@
 payload:
-  # > cnprint.org
-  # - USER-AGENT,cnprint*
+  # > Proxy
+  # - USER-AGENT,Proxy*
   - DOMAIN-KEYWORD,cnprint
   - DOMAIN-SUFFIX,cnprint.org
