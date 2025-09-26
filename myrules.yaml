@@ -3,4 +3,3 @@ payload:
   # - USER-AGENT,Proxy*
   - DOMAIN-KEYWORD,cnprint
   - DOMAIN-SUFFIX,cnprint.org
-  - SRC-IP-CIDR,192.168.1.194
