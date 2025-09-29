@@ -4,4 +4,5 @@ payload:
   - DOMAIN-KEYWORD,souziti
   - DOMAIN-SUFFIX,souziti.com
   - DOMAIN-KEYWORD,aia
-  - DOMAIN-SUFFIX,aia.com.cn
+  - DOMAIN-SUFFIX,aia.com
+  - DOMAIN-SUFFIX,unpkg.com
