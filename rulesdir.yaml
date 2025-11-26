@@ -3,6 +3,7 @@ payload:
   # - USER-AGENT, Direct*
   - DOMAIN-KEYWORD,souziti
   - DOMAIN-SUFFIX,souziti.com
+  - DOMAIN-KEYWORD,gebi1
   - DOMAIN-KEYWORD,aia
   - DOMAIN-SUFFIX,aia.com
   - DOMAIN-SUFFIX,unpkg.com
