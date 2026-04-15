@@ -7,5 +7,6 @@ payload:
   - DOMAIN-SUFFIX,hostus.us
   - DOMAIN-SUFFIX,a.nel.cloudflare.com
   - DOMAIN-SUFFIX,llg01.com
+  - DOMAIN-SUFFIX,llgjc.org
   - DOMAIN-SUFFIX,api.qrserver.com
   - DOMAIN-SUFFIX,apifdgbrgb.llgjc.xyz
