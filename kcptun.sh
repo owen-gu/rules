@@ -26,20 +26,8 @@ INIT_VERSION=3
 KCPTUN_INSTALL_DIR='/usr/local/kcptun'
 KCPTUN_LOG_DIR='/var/log/kcptun'
 
-# 注释掉所有GitHub在线地址，不再请求
-#KCPTUN_RELEASES_URL='https://api.github.com/repos/xtaci/kcptun/releases'
-#KCPTUN_LATEST_RELEASE_URL="${KCPTUN_RELEASES_URL}/latest"
-#KCPTUN_TAGS_URL='https://github.com/xtaci/kcptun/tags'
-#BASE_URL='https://github.com/kuoruan/shell-scripts/raw/master/kcptun'
-#SHELL_VERSION_INFO_URL="${BASE_URL}/version.json"
-
 # 禁用自动下载jq，使用系统自带
 JQ_BIN="$(command -v jq)"
-
-# 屏蔽在线启动文件地址
-#SUPERVISOR_SERVICE_FILE_DEBIAN_URL="${BASE_URL}/startup/supervisord.init.debain"
-#SUPERVISOR_SERVICE_FILE_REDHAT_URL="${BASE_URL}/startup/supervisord.init.redhat"
-#SUPERVISOR_SYSTEMD_FILE_URL="${BASE_URL}/startup/supervisord.systemd"
 
 # 默认参数
 # =======================
@@ -273,10 +261,6 @@ get_arch() {
 			;;
 	esac
 }
-
-# 禁用在线获取网络内容、下载文件 所有函数直接屏蔽
-get_content() { echo ""; }
-download_file() { echo "已禁用在线下载"; return 0; }
 
 # 改造：不自动下载jq，只检测系统有没有jq
 install_jq() {
@@ -1335,4 +1319,164 @@ do_install() {
 	install_deps
 	install_kcptun
 	install_supervisor
-	gen
+	download_startup_file
+	gen_kcptun_config
+	set_firewall
+	start_supervisor
+	enable_supervisor
+
+	cat >&1 <<-EOF
+
+恭喜! Kcptun 服务端安装成功。
+EOF
+
+	show_current_instance_info
+
+	cat >&1 <<-EOF
+Kcptun 安装目录: ${KCPTUN_INSTALL_DIR}
+
+已将 Supervisor 加入开机自启,
+Kcptun 服务端会随 Supervisor 的启动而启动
+
+更多使用说明: ${0} help
+EOF
+}
+
+# 卸载操作
+do_uninstall() {
+	check_root
+	cat >&1 <<-'EOF'
+你选择了卸载 Kcptun 服务端
+EOF
+	any_key_to_continue
+	echo "正在卸载 Kcptun 服务端并停止 Supervisor..."
+
+	if command_exists supervisorctl; then
+		supervisorctl shutdown
+	fi
+
+	if command_exists systemctl; then
+		systemctl stop supervisord.service
+	elif command_exists serice; then
+		service supervisord stop
+	fi
+
+	(
+		set -x
+		rm -f "/etc/supervisor/conf.d/kcptun*.conf"
+		rm -rf "$KCPTUN_INSTALL_DIR"
+		rm -rf "$KCPTUN_LOG_DIR"
+	)
+
+	cat >&1 <<-'EOF'
+是否同时卸载 Supervisor ?
+注意: Supervisor 的配置文件将同时被删除
+EOF
+
+	read -p "(默认: 不卸载) 请选择 [y/n]: " yn
+	if [ -n "$yn" ]; then
+		case "$(first_character "$yn")" in
+			y|Y)
+				if command_exists systemctl; then
+					systemctl disable supervisord.service
+					rm -f "/lib/systemd/system/supervisord.service" \
+						"/etc/systemd/system/supervisord.service"
+				elif command_exists service; then
+					if [ -z "$lsb_dist" ]; then
+						get_os_info
+					fi
+					case "$lsb_dist" in
+						ubuntu|debian|raspbian)
+							(
+								set -x
+								update-rc.d -f supervisord remove
+							)
+							;;
+						fedora|centos|redhat|oraclelinux|photon)
+							(
+								set -x
+								chkconfig supervisord off
+								chkconfig --del supervisord
+							)
+							;;
+					esac
+					rm -f '/etc/init.d/supervisord'
+				fi
+
+				(
+					set -x
+					# 新版使用 pip 卸载
+					if command_exists pip; then
+						pip uninstall -y supervisor 2>/dev/null || true
+					fi
+
+					# 旧版使用 easy_install 卸载
+					if command_exists easy_install; then
+						rm -rf "$(easy_install -mxN supervisor | grep 'Using.*supervisor.*\.egg' | awk '{print $2}')"
+					fi
+
+					rm -rf '/etc/supervisor/'
+					rm -f '/usr/local/bin/supervisord' \
+						'/usr/local/bin/supervisorctl' \
+						'/usr/local/bin/pidproxy' \
+						'/usr/local/bin/echo_supervisord_conf' \
+						'/usr/bin/supervisord' \
+						'/usr/bin/supervisorctl' \
+						'/usr/bin/pidproxy' \
+						'/usr/bin/echo_supervisord_conf'
+				)
+				;;
+			n|N|*)
+				start_supervisor
+				;;
+		esac
+	fi
+
+	cat >&1 <<-EOF
+卸载完成, 欢迎再次使用。
+EOF
+}
+
+# 添加实例
+instance_add() {
+	pre_ckeck
+
+	cat >&1 <<-'EOF'
+你选择了添加实例, 正在开始操作...
+EOF
+	current_instance_id="$(get_new_instance_id)"
+
+	set_kcptun_config
+	gen_kcptun_config
+	set_firewall
+	start_supervisor
+
+	cat >&1 <<-EOF
+恭喜, 实例 kcptun${current_instance_id} 添加成功!
+EOF
+	show_current_instance_info
+}
+
+# 删除实例
+instance_del() {
+	pre_ckeck
+
+	if [ -n "$1" ]; then
+		if is_number "$1"; then
+			if [ "$1" != "1" ]; then
+				current_instance_id="$1"
+			fi
+		else
+			cat >&2 <<-EOF
+			参数有误, 请使用 $0 del <id>
+			<id> 为实例ID, 当前共有 $(get_instance_count) 个实例
+			EOF
+
+			exit 1
+		fi
+	fi
+
+	cat >&1 <<-EOF
+你选择了删除实例 kcptun${current_instance_id}
+注意: 实例删除后无法恢复
+EOF
