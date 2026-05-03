@@ -20,12 +20,12 @@ ExecStart=${KCP_BIN} \
 -t ${TARGET_TUN_PORT} \
 -key ${KCP_KEY} \
 -crypt aes-128 \
--mode fast3 \
--mtu 1350 \
--sndwnd 1024 \
--rcvwnd 1024 \
--datashard 50 \
--parityshard 20 \
+-mode fast2 \
+-mtu 1400 \
+-sndwnd 512 \
+-rcvwnd 512 \
+-datashard 15 \
+-parityshard 5 \
 -dscp 0 \
 -nocomp \
 -acknodelay true \
