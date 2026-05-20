@@ -6,8 +6,7 @@ payload:
   - DOMAIN-KEYWORD,hostus
   - DOMAIN-SUFFIX,hostus.us
   - DOMAIN-SUFFIX,a.nel.cloudflare.com
-  - DOMAIN-SUFFIX,llg01.com
+  - DOMAIN-KEYWORD,llgjc
   - DOMAIN-SUFFIX,llgjc.org
-  - DOMAIN-SUFFIX,api.qrserver.com
-  - DOMAIN-SUFFIX,apifdgbrgb.llgjc.xyz
+  - DOMAIN-KEYWORD,juzicloud
   - DOMAIN-SUFFIX,juzicloud.net
